@@ -1,13 +1,6 @@
 <ion-view view-title="{{'mma.files.myfiles' | translate}}">
     <ion-content padding="true" mm-state-class>
         <section ng-if="canAccessFiles()">
-            <section class="list card" ng-if="showPrivateFiles()">
-                <a ui-sref="site.files-list({root: 'my'})" class="item item-icon-right" title="{{ 'mma.files.myprivatefiles' | translate }}">
-                    <i class="icon ion-ios-arrow-right"></i>
-                    {{ 'mma.files.myprivatefiles' | translate }}
-                </a>
-                <div class="item item-text-wrap"><p>{{ 'mma.files.myprivatefilesdesc' | translate }}</p></div>
-            </section>
 
             <section class="list card">
                 <a ui-sref="site.files-list({root: 'site'})" class="item item-icon-right" title="{{ 'mma.files.sitefiles' | translate }}">

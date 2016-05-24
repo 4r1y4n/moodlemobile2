@@ -30,8 +30,7 @@ angular.module('mm.addons.mod_quiz')
 
     var self = {},
         blockedQuizzes = {},
-        $mmaModQuizSync, // We'll inject it using $injector to prevent circular dependencies.
-        downloadPromises = {}; // Store download promises to prevent duplicate requests.
+        $mmaModQuizSync; // We'll inject it using $injector to prevent circular dependencies.
 
     // Constants.
 
@@ -2074,21 +2073,11 @@ angular.module('mm.addons.mod_quiz')
             startAttempt,
             quiz,
             quizAccessInfo,
-            attemptAccessInfo,
             preflightData = {},
-            scope,
-            prefetchPromise,
-            deleted = false;
-
-        if (downloadPromises[siteId] && downloadPromises[siteId][module.id]) {
-            // There's already a download ongoing for this package, return the promise.
-            return downloadPromises[siteId][module.id];
-        } else if (!downloadPromises[siteId]) {
-            downloadPromises[siteId] = {};
-        }
+            scope;
 
         // Mark package as downloading.
-        prefetchPromise = $mmFilepool.storePackageStatus(siteId, mmaModQuizComponent, module.id, mmCoreDownloading).then(function() {
+        return $mmFilepool.storePackageStatus(siteId, mmaModQuizComponent, module.id, mmCoreDownloading).then(function() {
             // Get quiz.
             return self.getQuiz(courseId, module.id, siteId).then(function(q) {
                 quiz = q;
@@ -2096,7 +2085,7 @@ angular.module('mm.addons.mod_quiz')
         }).then(function() {
             var promises = [];
 
-            // Get some quiz data.
+            // Get user attempts and data not related with attempts.
             promises.push(self.getQuizAccessInformation(quiz.id, false, true, siteId).then(function(info) {
                 quizAccessInfo = info;
             }));
@@ -2104,19 +2093,11 @@ angular.module('mm.addons.mod_quiz')
             promises.push(self.getUserAttempts(quiz.id, 'all', true, false, true, siteId).then(function(atts) {
                 attempts = atts;
             }));
-            promises.push(self.getAttemptAccessInformation(quiz.id, 0, false, true, siteId).then(function(info) {
-                attemptAccessInfo = info;
-            }));
 
             return $q.all(promises);
         }).then(function() {
             var attempt = attempts[attempts.length - 1];
             if (!attempt || self.isAttemptFinished(attempt.state)) {
-                // Check if the user can attempt the quiz.
-                if (attemptAccessInfo.preventnewattemptreasons.length) {
-                    return $q.reject($mmText.buildMessage(attemptAccessInfo.preventnewattemptreasons));
-                }
-
                 startAttempt = true;
                 attempt = undefined;
             }
@@ -2180,14 +2161,7 @@ angular.module('mm.addons.mod_quiz')
             if (scope) {
                 scope.$destroy();
             }
-            deleted = true;
-            delete downloadPromises[siteId][module.id];
         });
-
-        if (!deleted) {
-            downloadPromises[siteId][module.id] = prefetchPromise;
-        }
-        return prefetchPromise;
     };
 
     /**
@@ -2218,13 +2192,7 @@ angular.module('mm.addons.mod_quiz')
             var rules = quizAccessInfo.activerulenames;
             return $mmaModQuizAccessRulesDelegate.getFixedPreflightData(rules, quiz, attempt, preflightData, true, siteId)
                     .then(function() {
-
-                if (!attempt) {
-                    // We need to create a new attempt.
-                    return self.startAttempt(quiz.id, preflightData).then(function() {
-                        // Don't return anything.
-                    });
-                }
+                // Don't return anything.
             });
         }
     };
@@ -2296,9 +2264,7 @@ angular.module('mm.addons.mod_quiz')
             }
 
             angular.forEach(pages, function(page) {
-                promises.push(self.getAttemptReview(attempt.id, page, true, siteId).catch(function() {
-                    // Ignore failures, maybe the user can't review the attempt.
-                }));
+                promises.push(self.getAttemptReview(attempt.id, page, true, siteId));
             });
              // All questions in same page.
             promises.push(self.getAttemptReview(attempt.id, -1, true, siteId).then(function(data) {
@@ -2308,8 +2274,6 @@ angular.module('mm.addons.mod_quiz')
                     questionPromises.push($mmQuestionHelper.prefetchQuestionFiles(question, siteId));
                 });
                 return $q.all(questionPromises);
-            }, function() {
-                // Ignore failures, maybe the user can't review the attempt.
             }));
         } else {
 

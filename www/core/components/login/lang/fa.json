@@ -16,5 +16,9 @@
     "siteurlrequired": "نشانی سایت لازم است. مثال: <i>http://www.yourmoodlesite.abc یا https://www.yourmoodlesite.efg</i>",
     "username": "نام کاربری",
     "usernamerequired": "نام کاربر لازم است",
-    "webservicesnotenabled": "وب سرویس سایت اشکال دارد.با مدیر سایت هماهنگ نمایید"
+    "webservicesnotenabled": "وب سرویس سایت اشکال دارد.با مدیر سایت هماهنگ نمایید",
+    "credentials": "مشخصات کاربری",
+    "credentialsdescription": "نام کاربری و کلمه عبور خود را وارد کنید",
+    "login": "ورود",
+    "loginbutton": "ورود"
 }

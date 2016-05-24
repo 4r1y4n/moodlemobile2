@@ -165,7 +165,7 @@ angular.module('mm.addons.mod_quiz')
             // User just finished an attempt in offline and it seems it's been synced, since it's finished in online.
             // Go to the review of this attempt if the user hasn't left this view.
             if (!$scope.$$destroyed && $state.current.name == 'site.mod_quiz') {
-                promises.push(goToAutoReview());
+                goToAutoReview();
             }
             autoReview = undefined;
         }
@@ -332,16 +332,7 @@ angular.module('mm.addons.mod_quiz')
 
     // Go to review an attempt that has just been finished.
     function goToAutoReview() {
-        // Verify that user can see the review.
-        var attemptId = autoReview.attemptId;
-        if (quizAccessInfo.canreviewmyattempts) {
-            return $mmaModQuiz.getAttemptReview(attemptId, -1).then(function() {
-                return $state.go('site.mod_quiz-review', {courseid: courseId, quizid: quiz.id, attemptid: attemptId});
-            }).catch(function() {
-                // Ignore errors.
-            });
-        }
-        return $q.when();
+        $state.go('site.mod_quiz-review', {courseid: courseId, quizid: quiz.id, attemptid: autoReview.attemptId});
     }
 
     // Open a quiz to attempt it.
@@ -459,23 +450,18 @@ angular.module('mm.addons.mod_quiz')
             return;
         }
 
-        var forwardView = $ionicHistory.forwardView(),
-            promise;
+        var forwardView = $ionicHistory.forwardView();
         if (forwardView && forwardView.stateName === 'site.mod_quiz-player') {
             if (autoReview && autoReview.synced) {
-                promise = goToAutoReview();
+                goToAutoReview();
                 autoReview = undefined;
-            } else {
-                promise = $q.when();
             }
 
             // Refresh data.
             $scope.quizLoaded = false;
             scrollView.scrollTop();
-            promise.then(function() {
-                refreshData().finally(function() {
-                    $scope.quizLoaded = true;
-                });
+            refreshData().finally(function() {
+                $scope.quizLoaded = true;
             });
         } else {
             autoReview = undefined;
